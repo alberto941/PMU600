@@ -67,24 +67,24 @@ def parse_pmu_data(raw_text):
 
     return data
 
-def extract_selection_data(raw_text):
-    """
-    Extrait les sélections Bases, Outsiders et Belles chances pour Equidia.
-    """
-    categories = {"Bases": [], "Outsiders": [], "Belles chances": []}
-    patterns = {
-        "Bases": r"Bases\s*:\s*([\d\s-]+)",
-        "Outsiders": r"Outsiders\s*:\s*([\d\s-]+)",
-        "Belles chances": r"Belles chances\s*:\s*([\d\s-]+)"
-    }
+def extract_selection_data(text):
+    data = {"Bases": [], "Outsiders": [], "Belles chances": [], "Délaissés": []}
 
-    for category, pattern in patterns.items():
-        match = re.search(pattern, raw_text)
-        if match:
-            numbers = match.group(1)
-            categories[category] = [num.strip() for num in numbers.split("-") if num.strip().isdigit()]
+    lines = text.split("\n")
+    for line in lines:
+        line = line.strip()
+        if line.startswith("Bases :"):
+            data["Bases"] = [num.strip() for num in line.replace("Bases :", "").split("-") if num.strip().isdigit()]
+        elif line.startswith("Outsiders :"):
+            data["Outsiders"] = [num.strip() for num in line.replace("Outsiders :", "").split("-") if num.strip().isdigit()]
+        elif line.startswith("Belles chances :"):
+            data["Belles chances"] = [num.strip() for num in line.replace("Belles chances :", "").split("-") if num.strip().isdigit()]
+        elif line.startswith("Délaissés :"):  # Correction ici
+            data["Délaissés"] = [num.strip() for num in line.replace("Délaissés :", "").split("-") if num.strip().isdigit()]
 
-    return categories
+    print("📌 Délaissés extraits après correction :", data["Délaissés"])  # Debugging
+    return data
+
 
 def extract_zeturf_data(raw_text):
     """
