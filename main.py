@@ -72,14 +72,13 @@ class PMUInterface(QWidget):
             self.result_label.setText("Aucune donnée PMU à traiter.")
             return
 
-        parsed_data = data_processor.parse_pmu_data(raw_text)
-        equidia_data = data_processor.extract_selection_data(equidia_text)
-        zeturf_numbers = data_processor.extract_zeturf_data(zeturf_text)
+        # Extraction et traitement des données
+        self.parsed_data = data_processor.parse_pmu_data(raw_text)
+        self.equidia_selection = data_processor.extract_selection_data(equidia_text)
+        self.zeturf_selection = data_processor.extract_zeturf_data(zeturf_text)
 
-        self.populate_table(parsed_data, equidia_data, zeturf_numbers)
-        self.equidia_selection = equidia_data
-        self.zeturf_selection = zeturf_numbers
-        self.chevaux_liste = [row[0] for row in parsed_data]
+        # Remplir le tableau
+        self.populate_table(self.parsed_data, self.equidia_selection, self.zeturf_selection)
 
     def populate_table(self, data, equidia_data, zeturf_numbers):
         """Remplit le tableau avec les données traitées et les sélections Equidia/Zeturf."""
@@ -99,15 +98,20 @@ class PMUInterface(QWidget):
             self.table.setItem(row_idx, 13, QTableWidgetItem("✅" if numero in zeturf_numbers else ""))
 
     def ouvrir_analyse_comparaison(self):
-        """Ouvre la fenêtre d'analyse comparée."""
-        if not hasattr(self, 'equidia_selection') or not hasattr(self, 'zeturf_selection'):
+        """Ouvre la fenêtre d'analyse comparée avec les musiques et les délaissés."""
+        if not hasattr(self, 'equidia_selection') or not hasattr(self, 'zeturf_selection') or not hasattr(self, 'parsed_data'):
             QMessageBox.warning(self, "Analyse impossible", "Veuillez d'abord traiter les données PMU.")
             return
+
+        # Récupérer les délaissés
+        delaisses = self.equidia_selection.get("Délaissés", [])
 
         self.analyse_fenetre = AnalyseComparaison(
             self.equidia_selection.get("Bases", []) + self.equidia_selection.get("Outsiders", []) + self.equidia_selection.get("Belles chances", []),
             self.zeturf_selection,
-            self.chevaux_liste
+            [row[0] for row in self.parsed_data],  # Liste des numéros des chevaux
+            self.parsed_data,  # On passe les données complètes pour récupérer les musiques
+            delaisses  # On passe maintenant les délaissés !
         )
         self.analyse_fenetre.show()
 
